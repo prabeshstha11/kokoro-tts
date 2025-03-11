@@ -13,11 +13,11 @@ def read_text_from_file(file_path):
 text = read_text_from_file(file_path)
 
 generator = pipeline(
-    text, voice='af_heart',
+    text, voice='',
     speed=1, split_pattern=r'\n+'
 )
 
-for i, (gs, ps, audio) in enumerate(generator):
-    output_filename = f'{i}_output.wav' 
-    sf.write(output_filename, audio, 24000)
-    print(f"Saved: {output_filename}")
+gs, ps, audio = next(generator)
+output_filename = 'output.wav' 
+sf.write(output_filename, audio, 24000)
+print(f"Saved: {output_filename}")
