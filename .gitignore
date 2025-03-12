@@ -27,7 +27,6 @@ share/python-wheels/
 MANIFEST
 
 # other
-*.txt
 *.wav
 *.mp3
 
