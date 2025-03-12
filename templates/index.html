@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Text to Speech Generator</title>
+        <!-- HTMX -->
+        <script src="https://unpkg.com/htmx.org@1.9.11"></script>
+        <!-- Tailwind CSS -->
+        <script src="https://cdn.tailwindcss.com"></script>
+        <style>
+            .loader {
+                border: 3px solid #f3f3f3;
+                border-radius: 50%;
+                border-top: 3px solid #3498db;
+                width: 20px;
+                height: 20px;
+                animation: spin 1s linear infinite;
+                display: inline-block;
+                margin-left: 8px;
+            }
+
+            @keyframes spin {
+                0% {
+                    transform: rotate(0deg);
+                }
+                100% {
+                    transform: rotate(360deg);
+                }
+            }
+        </style>
+    </head>
+    <body class="bg-[#161616] min-h-screen text-[#f0f0f0]">
+        <div class="container mx-auto py-8 px-4 max-w-2xl">
+            <h1 class="text-3xl font-bold mb-6 text-center text-[#f0f0f0]">Text to Speech Generator</h1>
+
+            <div class="text-[#f0f0f0] p-6 rounded-lg shadow-md">
+                <form id="tts-form" class="space-y-4" hx-post="/generate-audio" hx-target="#result" hx-indicator="#loading">
+                    <div>
+                        <label for="text" class="block text-sm font-medium text-[#f0f0f0] mb-1">Text to convert</label>
+                        <textarea
+                            id="text"
+                            name="text"
+                            rows="6"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 resize-none text-[#161616]"
+                            required
+                        ></textarea>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="voice" class="block text-sm font-medium text-[#f0f0f0 mb-1">Voice</label>
+                            <select
+                                id="voice"
+                                name="voice"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-[#161616]"
+                            >
+                                {% for voice in voices %}
+                                <option value="{{ voice.name }}">{{ voice.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div>
+                            <label for="speed" class="block text-sm font-medium text-[#f0f0f0] mb-1">Speed</label>
+                            <input
+                                type="number"
+                                id="speed"
+                                name="speed"
+                                min="0.5"
+                                max="2"
+                                step="0.1"
+                                value="1"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-[#161616]"
+                            />
+                        </div>
+                    </div>
+
+                    <div class="flex justify-center">
+                        <button
+                            type="submit"
+                            class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                        >
+                            Generate Audio
+                            <span id="loading" class="loader htmx-indicator ml-2"></span>
+                        </button>
+                    </div>
+                </form>
+
+                <div id="result" class="mt-6"></div>
+            </div>
+        </div>
+
+        <template id="audio-result-template">
+            <div class="p-4 border rounded-md bg-gray-50">
+                <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div class="flex-1 w-full">
+                        <audio controls class="w-full">
+                            <source src="" type="audio/wav" />
+                            Your browser does not support the audio element.
+                        </audio>
+                    </div>
+                    <a href="" download class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 text-center">
+                        Download
+                    </a>
+                </div>
+            </div>
+        </template>
+
+        <script>
+            document.body.addEventListener("htmx:afterSwap", function (event) {
+                if (event.detail.target.id === "result") {
+                    const data = JSON.parse(event.detail.xhr.responseText);
+                    if (data.success) {
+                        const template = document.getElementById("audio-result-template");
+                        const clone = template.content.cloneNode(true);
+
+                        // Set audio source
+                        const audio = clone.querySelector("audio source");
+                        audio.src = data.audioUrl;
+
+                        // Set download link
+                        const downloadBtn = clone.querySelector("a");
+                        downloadBtn.href = `/download/${data.filename}`;
+                        downloadBtn.download = data.filename;
+
+                        // Clear existing content and append the template
+                        const resultDiv = document.getElementById("result");
+                        resultDiv.innerHTML = "";
+                        resultDiv.appendChild(clone);
+
+                        const audioElement = resultDiv.querySelector("audio");
+                        audioElement.load();
+                        audioElement.play();
+                    }
+                }
+            });
+        </script>
+    </body>
+</html>

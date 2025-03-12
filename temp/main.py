@@ -13,7 +13,7 @@ def read_text_from_file(file_path):
 text = read_text_from_file(file_path)
 
 generator = pipeline(
-    text, voice='am_liam',
+    text, voice='af_alloy',
     speed=1, split_pattern=r'\n+'
 )
 
